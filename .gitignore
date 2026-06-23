@@ -1,0 +1,18 @@
+# deps
+node_modules/
+
+# build
+dist/
+
+# logs
+*.log
+npm-debug.log*
+
+# env / editor
+.env
+.env.local
+.DS_Store
+Thumbs.db
+
+# runtime
+*.pid
