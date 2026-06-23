@@ -16,3 +16,7 @@ Thumbs.db
 
 # runtime
 *.pid
+
+# music (большие аудио живут на сервере, не в репозитории)
+*.mp3
+public/music/

@@ -55,7 +55,56 @@ const Sound = (() => {
     unlock() { try { ensure().resume(); } catch {} },
   };
 })();
-document.addEventListener('pointerdown', () => Sound.unlock(), { once: true });
+/* ----------------------------------------------------------------- фоновая музыка */
+const Music = (() => {
+  let audio = null;
+  let started = false;
+  let muted = LS.get('ls_music_muted') === true;
+  const VOL = 0.28;
+  const ensure = () => {
+    if (!audio) {
+      audio = new Audio('/music/casino-jazz.mp3');
+      audio.loop = true;
+      audio.volume = VOL;
+      audio.preload = 'auto';
+    }
+    return audio;
+  };
+  const start = () => {
+    if (started || muted) return;
+    const a = ensure();
+    a.play().then(() => { started = true; updateBtn(); }).catch(() => {});
+  };
+  const toggle = () => {
+    muted = !muted;
+    LS.set('ls_music_muted', muted);
+    if (muted) {
+      if (audio) audio.pause();
+      started = false;
+    } else {
+      start();
+    }
+    updateBtn();
+  };
+  let btn = null;
+  const updateBtn = () => {
+    if (!btn) return;
+    btn.textContent = muted ? '🔇' : '🎵';
+    btn.title = muted ? 'Включить музыку' : 'Выключить музыку';
+    btn.classList.toggle('off', muted);
+  };
+  const mount = () => {
+    btn = document.createElement('button');
+    btn.className = 'music-toggle';
+    btn.onclick = toggle;
+    document.body.appendChild(btn);
+    updateBtn();
+  };
+  return { start, mount, isMuted: () => muted };
+})();
+
+document.addEventListener('pointerdown', () => { Sound.unlock(); Music.start(); }, { once: false });
+Music.mount();
 
 /* ----------------------------------------------------------------- сокет */
 socket.on('connect', () => {
