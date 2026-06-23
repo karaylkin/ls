@@ -625,6 +625,64 @@ export class Room {
     this.hooks.broadcast();
   }
 
+  // ---------------------------------------------------------------- новая игра
+
+  /**
+   * Запуск новой игры в том же лобби без пересоздания (после TOURNAMENT_END).
+   * Возрождает игроков, сбрасывает фишки/использованные вопросы и либо сразу
+   * начинает новый турнир, либо возвращает всех в лобби (для смены настроек).
+   */
+  playAgain(playerId: string, toLobby = false): string | null {
+    if (playerId !== this.hostId) return 'Только хост может начать новую игру';
+    if (this.phase !== 'TOURNAMENT_END' && this.phase !== 'LOBBY')
+      return 'Новая игра доступна после завершения турнира';
+    this.clearAllTimers();
+
+    // Отключившиеся покинули стол — убираем, освобождая места.
+    this.players = this.players.filter((p) => p.connected);
+    if (!this.players.some((p) => p.id === this.hostId)) {
+      this.hostId = this.players[0]?.id ?? null;
+    }
+
+    // Полный сброс игроков и состояния турнира.
+    for (const p of this.players) {
+      p.eliminated = false;
+      p.chips = this.settings.startingChips;
+      p.chipsAtRoundStart = this.settings.startingChips;
+      p.ready = false;
+      p.folded = false;
+      p.allIn = false;
+      p.committed = 0;
+      p.roundBet = 0;
+      p.answer = null;
+      p.answerLocked = false;
+      p.showCard = false;
+      p.hasActedOnce = false;
+    }
+    this.usedQuestionIds = new Set();
+    this.roundNumber = 0;
+    this.dealerSeat = -1;
+    this.question = null;
+    this.lastResult = null;
+    this.message = null;
+    this.currentAnte = 0;
+    this.currentBet = 0;
+    this.bettingRoundIndex = 0;
+    this.hintsRevealed = 0;
+    this.answerRevealed = false;
+    this.toActId = null;
+
+    if (toLobby || this.players.length < 2) {
+      this.phase = 'LOBBY';
+      if (this.players.length < 2 && !toLobby)
+        this.message = 'Для новой игры нужно ещё игроки (минимум 2).';
+      this.hooks.broadcast();
+      return null;
+    }
+    this.startRound();
+    return null;
+  }
+
   // ---------------------------------------------------------------- showCard
 
   showCard(playerId: string) {

@@ -133,6 +133,13 @@ io.on('connection', (socket) => {
 
   socket.on('showCard', () => withRoom((room, id) => room.showCard(id)));
 
+  socket.on('playAgain', (p: { toLobby?: boolean }) =>
+    withRoom((room, id) => {
+      const e = room.playAgain(id, !!p?.toLobby);
+      if (e) err(socket, e);
+    }),
+  );
+
   socket.on('closeLobby', () =>
     withRoom((room, id) => {
       if (room.closeLobby(id)) manager.closeLobby(room.code, 'Хост закрыл лобби');

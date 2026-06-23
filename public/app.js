@@ -486,9 +486,16 @@ function renderEnd() {
       <div class="kicker">Победитель турнира</div>
       <div class="champ logo">${esc(champ?.name || '')}</div>
       <div class="muted mono-num">Финальный стек: ${fmt(champ?.chips || 0)}</div>
-      <div style="margin-top:24px"><button class="btn-gold" id="again">На главный экран</button></div>
+      <div class="act-row" style="margin-top:26px" id="endActions"></div>
     </div>`);
-  el.querySelector('#again').onclick = resetToHome;
+  const acts = el.querySelector('#endActions');
+  if (state.isHost) {
+    acts.append(btn('Новая игра', 'btn-gold', () => emit('playAgain', { toLobby: false })));
+    acts.append(btn('Настроить в лобби', 'btn-ghost', () => emit('playAgain', { toLobby: true })));
+  } else {
+    acts.append(h(`<div class="turn-label" style="width:100%">Ждём, пока хост начнёт новую игру…</div>`));
+  }
+  acts.append(btn('Выйти', 'btn-ghost', resetToHome));
   $app.append(el);
 }
 
